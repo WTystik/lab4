@@ -92,13 +92,24 @@ def render_charts(data, output, label):
     daily = data["daily"]
     x = list(range(len(daily)))
     if daily:
-        ax.bar([v - .2 for v in x], [r["created"] for r in daily], width=.4, label="Созданы за день", color="#86b7df")
-        ax.bar([v + .2 for v in x], [r["closed"] for r in daily], width=.4, label="Закрыты за день", color="#a8d5a2")
-        ax.plot(x, [r["cumulative_created"] for r in daily], label="Созданы накопительно", color="#185991")
-        ax.plot(x, [r["cumulative_closed"] for r in daily], label="Закрыты накопительно", color="#287b33")
+        ax.bar([v - .2 for v in x], [r["created"] for r in daily], width=.4, label="Созданы за день", color="#EF5350")
+        ax.bar([v + .2 for v in x], [r["closed"] for r in daily], width=.4, label="Закрыты за день", color="#66BB6A")
+        ax.plot(x, [r["cumulative_created"] for r in daily], label="Созданы накопительно",
+                color="#B71C1C", marker="o", markersize=8, linewidth=2, zorder=3)
+        ax.plot(x, [r["cumulative_closed"] for r in daily], label="Закрыты накопительно",
+                color="#1B5E20", marker="s", markersize=8, linewidth=2, zorder=3)
         step = max(1, len(daily) // 10)
         ticks = sorted(set(list(range(0, len(daily), step)) + [len(daily) - 1]))
         ax.set_xticks(ticks, [daily[i]["day"] for i in ticks], rotation=35, ha="right")
+        if len(daily) == 1:
+            ax.set_xlim(-.8, .8)
+            ax.set_xticks([0], [daily[0]["day"]])
+            for field, color in (("cumulative_created", "#B71C1C"),
+                                 ("cumulative_closed", "#1B5E20")):
+                ax.annotate(f"Накоплено: {daily[0][field]}", (0, daily[0][field]),
+                            xytext=(12, 8), textcoords="offset points", color=color,
+                            fontsize=10, fontweight="bold")
+        ax.margins(y=.18)
         ax.legend()
     ax.set(xlabel=f"Календарный день, UTC{data['utc_offset_hours']:+g}", ylabel="Количество задач")
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -108,8 +119,8 @@ def render_charts(data, output, label):
     users = data["users"]
     fig, ax = plt.subplots(figsize=(11, max(5, .43 * len(users))))
     y = list(range(len(users)))
-    ax.barh([v - .2 for v in y], [u["assignee"] for u in users], height=.4, label="Исполнитель", color="#2563a3")
-    ax.barh([v + .2 for v in y], [u["reporter"] for u in users], height=.4, label="Репортер", color="#d69237")
+    ax.barh([v - .2 for v in y], [u["assignee"] for u in users], height=.4, label="Исполнитель", color="#EF5350")
+    ax.barh([v + .2 for v in y], [u["reporter"] for u in users], height=.4, label="Репортер", color="#66BB6A")
     names = [u["name"] for u in users]
     labels = [u["name"] + (f" [{u['id'][-6:]}]" if names.count(u["name"]) > 1 else "") for u in users]
     ax.set_yticks(y, labels)

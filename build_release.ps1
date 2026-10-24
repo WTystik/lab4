@@ -14,5 +14,7 @@ Copy-Item -LiteralPath $taskWheel.FullName -Destination $taskRelease
 foreach ($taskFile in @('config.toml', 'start.cmd', 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $taskFile) -Destination $taskRelease
 }
-Compress-Archive -LiteralPath $taskRelease -DestinationPath (Join-Path $PSScriptRoot 'dist\jira-lab4-analytics-windows.zip') -Force
+$taskReleaseFiles = @($taskWheel.Name, 'config.toml', 'start.cmd', 'README.md') |
+    ForEach-Object { Join-Path $taskRelease $_ }
+Compress-Archive -LiteralPath $taskReleaseFiles -DestinationPath (Join-Path $PSScriptRoot 'dist\jira-lab4-analytics-windows.zip') -Force
 Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'dist') | Select-Object Name,Length
