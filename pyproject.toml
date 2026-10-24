@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jira-lab4-analytics"
+version = "1.0.0"
+description = "Jira Cloud analytics for laboratory work 4"
+requires-python = ">=3.11"
+dependencies = ["matplotlib>=3.8,<4"]
+
+[project.scripts]
+jira-analytics = "jira_analytics.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jira_analytics*"]

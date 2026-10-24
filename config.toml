@@ -1,0 +1,8 @@
+[jira]
+base_url = "https://lylyca326.atlassian.net"
+jql = "project = HELP ORDER BY created ASC"
+closed_status_names = ["Закрыта", "Done", "Closed", "Resolved"]
+severity_field = "priority"
+utc_offset_hours = 3
+timeout_seconds = 30
+retries = 3

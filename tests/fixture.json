@@ -1,0 +1,212 @@
+[
+  {
+    "key": "DEMO-1",
+    "fields": {
+      "created": "2026-10-20T09:00:00+0300",
+      "resolutiondate": null,
+      "status": {
+        "id": "4",
+        "name": "Закрыта",
+        "statusCategory": {
+          "key": "done"
+        }
+      },
+      "assignee": {
+        "accountId": "user-1",
+        "displayName": "Учебный пользователь"
+      },
+      "reporter": {
+        "accountId": "user-1",
+        "displayName": "Учебный пользователь"
+      },
+      "priority": {
+        "name": "High"
+      },
+      "timespent": 7200
+    },
+    "histories": [
+      {
+        "created": "2026-10-20T10:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "1",
+            "fromString": "Новая",
+            "to": "2",
+            "toString": "В работе"
+          }
+        ]
+      },
+      {
+        "created": "2026-10-20T12:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "2",
+            "fromString": "В работе",
+            "to": "4",
+            "toString": "Закрыта"
+          }
+        ]
+      },
+      {
+        "created": "2026-10-20T13:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "4",
+            "fromString": "Закрыта",
+            "to": "2",
+            "toString": "В работе"
+          }
+        ]
+      },
+      {
+        "created": "2026-10-20T16:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "2",
+            "fromString": "В работе",
+            "to": "3",
+            "toString": "Проверка"
+          }
+        ]
+      },
+      {
+        "created": "2026-10-20T17:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "3",
+            "fromString": "Проверка",
+            "to": "4",
+            "toString": "Закрыта"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "DEMO-2",
+    "fields": {
+      "created": "2026-10-20T12:00:00+0300",
+      "resolutiondate": null,
+      "status": {
+        "id": "4",
+        "name": "Закрыта",
+        "statusCategory": {
+          "key": "done"
+        }
+      },
+      "assignee": {
+        "accountId": "user-2",
+        "displayName": "Учебный пользователь"
+      },
+      "reporter": {
+        "accountId": "user-1",
+        "displayName": "Учебный пользователь"
+      },
+      "priority": {
+        "name": "Medium"
+      },
+      "timespent": null
+    },
+    "histories": [
+      {
+        "created": "2026-10-20T13:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "1",
+            "fromString": "Новая",
+            "to": "2",
+            "toString": "В работе"
+          }
+        ]
+      },
+      {
+        "created": "2026-10-21T12:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "2",
+            "fromString": "В работе",
+            "to": "4",
+            "toString": "Закрыта"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "DEMO-3",
+    "fields": {
+      "created": "2026-10-21T09:00:00+0300",
+      "resolutiondate": null,
+      "status": {
+        "id": "2",
+        "name": "В работе",
+        "statusCategory": {
+          "key": "indeterminate"
+        }
+      },
+      "assignee": {
+        "accountId": "user-1",
+        "displayName": "Учебный пользователь"
+      },
+      "reporter": {
+        "accountId": "user-2",
+        "displayName": "Учебный пользователь"
+      },
+      "priority": {
+        "name": "Medium"
+      },
+      "timespent": null
+    },
+    "histories": [
+      {
+        "created": "2026-10-21T10:00:00+0300",
+        "items": [
+          {
+            "field": "status",
+            "fieldId": "status",
+            "from": "1",
+            "fromString": "Новая",
+            "to": "2",
+            "toString": "В работе"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "DEMO-4",
+    "fields": {
+      "created": "2026-10-23T09:00:00+0300",
+      "resolutiondate": null,
+      "status": {
+        "id": "1",
+        "name": "Новая",
+        "statusCategory": {
+          "key": "indeterminate"
+        }
+      },
+      "assignee": null,
+      "reporter": {
+        "accountId": "user-2",
+        "displayName": "Учебный пользователь"
+      },
+      "priority": null,
+      "timespent": null
+    },
+    "histories": []
+  }
+]
