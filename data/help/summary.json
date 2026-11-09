@@ -1,0 +1,139 @@
+{
+  "total": 6,
+  "closed_count": 3,
+  "closed_with_date_count": 3,
+  "closed_without_date_count": 0,
+  "missing_worklogs": 0,
+  "lifetime_hours": [
+    0.025349444444444442,
+    0.043388333333333334,
+    0.049346388888888884
+  ],
+  "status_hours": {
+    "Новая": [
+      0.007224444444444444,
+      0.039807777777777775,
+      0.048639444444444443
+    ],
+    "В работе": [
+      0.00954027777777778,
+      0.0032730555555555555,
+      0.0003938888888888889
+    ],
+    "Проверка": [
+      0.008584722222222223,
+      0.0003075,
+      0.00031305555555555557
+    ],
+    "Закрыта": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "daily": [
+    {
+      "day": "2026-10-19",
+      "created": 6,
+      "closed": 3,
+      "cumulative_created": 6,
+      "cumulative_closed": 3
+    }
+  ],
+  "users": [
+    {
+      "id": "712020:dd6c7604-7afe-4a66-b4ec-9d6f61cbe908",
+      "name": "Роман",
+      "assignee": 6,
+      "reporter": 6,
+      "total_unique": 6
+    }
+  ],
+  "logged_hours": [
+    0.08333333333333333,
+    0.25,
+    2.05
+  ],
+  "severity_counts": {
+    "High": 2,
+    "Highest": 1,
+    "Low": 1,
+    "Medium": 1,
+    "Lowest": 1
+  },
+  "severity_field": "priority",
+  "utc_offset_hours": 3,
+  "warnings": [],
+  "issues": [
+    {
+      "key": "HELP-1",
+      "created": "2026-10-19T16:34:24.718000+03:00",
+      "closed": "2026-10-19T16:35:55.976000+03:00",
+      "lifetime_hours": 0.025349444444444442,
+      "logged_hours": 0.08333333333333333,
+      "status_hours": {
+        "Новая": 0.007224444444444444,
+        "В работе": 0.00954027777777778,
+        "Проверка": 0.008584722222222223,
+        "Закрыта": 0.0
+      }
+    },
+    {
+      "key": "HELP-2",
+      "created": "2026-10-19T16:37:06.981000+03:00",
+      "closed": "2026-10-19T16:39:43.179000+03:00",
+      "lifetime_hours": 0.043388333333333334,
+      "logged_hours": 0.25,
+      "status_hours": {
+        "Новая": 0.039807777777777775,
+        "В работе": 0.0032730555555555555,
+        "Проверка": 0.0003075,
+        "Закрыта": 0.0
+      }
+    },
+    {
+      "key": "HELP-3",
+      "created": "2026-10-19T16:37:37.452000+03:00",
+      "closed": "2026-10-19T16:40:35.099000+03:00",
+      "lifetime_hours": 0.049346388888888884,
+      "logged_hours": 2.05,
+      "status_hours": {
+        "Новая": 0.048639444444444443,
+        "В работе": 0.0003938888888888889,
+        "Проверка": 0.00031305555555555557,
+        "Закрыта": 0.0
+      }
+    },
+    {
+      "key": "HELP-4",
+      "created": "2026-10-19T16:38:14.294000+03:00",
+      "closed": null,
+      "lifetime_hours": null,
+      "logged_hours": null,
+      "status_hours": {}
+    },
+    {
+      "key": "HELP-5",
+      "created": "2026-10-19T16:38:41.701000+03:00",
+      "closed": null,
+      "lifetime_hours": null,
+      "logged_hours": null,
+      "status_hours": {}
+    },
+    {
+      "key": "HELP-6",
+      "created": "2026-10-19T16:39:05.615000+03:00",
+      "closed": null,
+      "lifetime_hours": null,
+      "logged_hours": null,
+      "status_hours": {}
+    }
+  ],
+  "source": {
+    "mode": "saved-jira",
+    "base_url": "https://lylyca326.atlassian.net",
+    "jql": "project = HELP ORDER BY created ASC",
+    "exported_at_utc": "2026-10-24T11:21:32.182086+00:00",
+    "processed_at_utc": "2026-10-26T13:45:04.458248+00:00"
+  }
+}

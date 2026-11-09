@@ -3,7 +3,8 @@ __pycache__/
 *.pyc
 *.egg-info/
 build/
-dist/
+dist/*
+!dist/jira-lab4-analytics-windows.zip
 release/
 output*/
 *.log
