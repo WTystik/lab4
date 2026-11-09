@@ -8,7 +8,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Tests failed.' }
 if ($LASTEXITCODE -ne 0) { throw 'Wheel build failed.' }
 $taskRelease = Join-Path $PSScriptRoot 'release\jira-lab4-analytics'
 New-Item -ItemType Directory -Path $taskRelease -Force | Out-Null
-$taskWheel = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'dist') -Filter 'jira_lab4_analytics-1.0.0-*.whl' | Select-Object -First 1
+$taskVersion = (& $taskPython -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])").Trim()
+$taskWheel = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'dist') -Filter "jira_lab4_analytics-$taskVersion-*.whl" | Select-Object -First 1
 if (-not $taskWheel) { throw 'Built wheel not found.' }
 Copy-Item -LiteralPath $taskWheel.FullName -Destination $taskRelease
 foreach ($taskFile in @('config.toml', 'start.cmd', 'README.md')) {

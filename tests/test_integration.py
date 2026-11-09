@@ -1,6 +1,7 @@
 """Интеграция модулей и CLI на локальном наборе, без доступа к реальной Jira."""
 
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -36,3 +37,20 @@ class IntegrationTests(unittest.TestCase):
             result = analyze(client.issues("project = DEMO"), ["Закрыта"])
         self.assertEqual(result["total"], 4)
         self.assertEqual(result["closed_count"], 2)
+
+    def test_saved_export_rebuilds_without_credentials_or_network(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "saved"
+            source.mkdir()
+            issues = json.loads((ROOT / "tests" / "fixture.json").read_text(encoding="utf-8"))
+            (source / "raw_issues.json").write_text(json.dumps(issues), encoding="utf-8")
+            original = {"mode": "jira", "jql": "project = DEMO", "exported_at_utc": "2026-10-20T12:00:00Z"}
+            (source / "summary.json").write_text(json.dumps({"total": 4, "source": original}), encoding="utf-8")
+            output = Path(temp) / "rebuilt"
+            with patch.dict(os.environ, {}, clear=True), patch.object(JiraClient, "issues", side_effect=AssertionError("Network is forbidden")):
+                code = main(["--config", str(ROOT / "config.toml"), "--from-export", str(source), "--output", str(output)])
+            self.assertEqual(code, 0)
+            result = json.loads((output / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual(result["source"]["mode"], "saved-jira")
+            self.assertEqual(result["source"]["exported_at_utc"], original["exported_at_utc"])
+            self.assertEqual(result["total"], 4)

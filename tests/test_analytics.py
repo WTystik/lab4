@@ -102,8 +102,30 @@ class AnalyticsTests(unittest.TestCase):
         issue["fields"]["resolutiondate"] = None
         issue["fields"]["updated"] = "2026-10-24T12:00:00+0300"
         result = analyze([issue], ["Закрыта"])
-        self.assertEqual(result["closed_count"], 0)
+        self.assertEqual(result["closed_count"], 1)
+        self.assertEqual(result["closed_with_date_count"], 0)
+        self.assertEqual(result["lifetime_hours"], [])
         self.assertEqual(len(result["warnings"]), 1)
+
+    def test_closed_without_timestamp_preserves_logged_time(self):
+        issue = deepcopy(self.issues[0])
+        issue["histories"] = []
+        issue["fields"]["resolutiondate"] = None
+        result = analyze([issue], ["Закрыта"])
+        self.assertEqual(result["closed_count"], 1)
+        self.assertEqual(result["closed_without_date_count"], 1)
+        self.assertEqual(result["logged_hours"], [2.0])
+        self.assertEqual(result["missing_worklogs"], 0)
+
+    def test_unvisited_state_is_counted_as_zero_duration(self):
+        self.assertEqual(self.data["status_hours"]["Проверка"], [1.0, 0.0])
+        for values in self.data["status_hours"].values():
+            self.assertEqual(len(values), self.data["closed_with_date_count"])
+
+    def test_state_durations_add_up_to_each_lifetime(self):
+        for row in self.data["issues"]:
+            if row["closed"] is not None:
+                self.assertAlmostEqual(sum(row["status_hours"].values()), row["lifetime_hours"])
 
 
 if __name__ == "__main__":

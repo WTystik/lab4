@@ -81,8 +81,8 @@ def analyze(issues, closed_names, utc_offset_hours=3, severity_field="priority")
     """Рассчитывает шесть групп аналитики для всей выгруженной выборки."""
     tz = timezone(timedelta(hours=utc_offset_hours))
     created, closed, severities = Counter(), Counter(), Counter()
-    lifetime, logged, by_status, rows, warnings = [], [], defaultdict(list), [], []
-    missing_worklogs = 0
+    lifetime, logged, rows, warnings = [], [], [], []
+    missing_worklogs, closed_count = 0, 0
     for issue in issues:
         fields = issue["fields"]
         start = parse_time(fields["created"])
@@ -99,16 +99,9 @@ def analyze(issues, closed_names, utc_offset_hours=3, severity_field="priority")
         status = fields["status"]
         is_closed = status.get("statusCategory", {}).get("key") == "done" or status["name"] in closed_names
         if is_closed and end is None:
-            warnings.append(f"{issue['key']}: нет даты закрытия; исключена из временных графиков.")
-        if end is not None:
-            hours = (end - start).total_seconds() / 3600
-            if hours < 0:
-                raise ValueError(f"{issue['key']}: отрицательная длительность.")
-            lifetime.append(hours)
-            closed[end.astimezone(tz).date().isoformat()] += 1
-            states = status_hours(issue, end)
-            for name, duration in states.items():
-                by_status[name].append(duration)
+            warnings.append(f"{issue['key']}: нет даты закрытия; исключена из длительностей и дат закрытия.")
+        if is_closed:
+            closed_count += 1
             raw_spent = fields.get("timespent")
             spent = None if raw_spent is None else float(raw_spent) / 3600
             if spent is None:
@@ -117,9 +110,25 @@ def analyze(issues, closed_names, utc_offset_hours=3, severity_field="priority")
                 if spent < 0:
                     raise ValueError("Залогированное время не может быть отрицательным.")
                 logged.append(spent)
+            row["logged_hours"] = spent
+        if end is not None:
+            hours = (end - start).total_seconds() / 3600
+            if hours < 0:
+                raise ValueError(f"{issue['key']}: отрицательная длительность.")
+            lifetime.append(hours)
+            closed[end.astimezone(tz).date().isoformat()] += 1
+            states = status_hours(issue, end)
             row.update(closed=end.isoformat(), lifetime_hours=hours,
-                       logged_hours=spent, status_hours=states)
+                       status_hours=states)
         rows.append(row)
+    # Нулевое время тоже наблюдение: каждый известный статус содержит
+    # по одному значению для каждой закрытой задачи с известной датой.
+    dated_rows = [row for row in rows if row["closed"] is not None]
+    state_names = list(dict.fromkeys(name for row in dated_rows for name in row["status_hours"]))
+    by_status = {name: [row["status_hours"].get(name, 0.0) for row in dated_rows]
+                 for name in state_names}
+    for row in dated_rows:
+        row["status_hours"] = {name: row["status_hours"].get(name, 0.0) for name in state_names}
     all_days = sorted(set(created) | set(closed))
     daily, cumulative_created, cumulative_closed = [], 0, 0
     if all_days:
@@ -132,8 +141,10 @@ def analyze(issues, closed_names, utc_offset_hours=3, severity_field="priority")
             daily.append({"day": label, "created": created[label], "closed": closed[label],
                           "cumulative_created": cumulative_created, "cumulative_closed": cumulative_closed})
             day += timedelta(days=1)
-    return {"total": len(issues), "closed_count": len(lifetime), "missing_worklogs": missing_worklogs,
-            "lifetime_hours": lifetime, "status_hours": dict(by_status), "daily": daily,
+    return {"total": len(issues), "closed_count": closed_count,
+            "closed_with_date_count": len(lifetime), "closed_without_date_count": closed_count - len(lifetime),
+            "missing_worklogs": missing_worklogs,
+            "lifetime_hours": lifetime, "status_hours": by_status, "daily": daily,
             "users": user_counts(issues), "logged_hours": logged, "severity_counts": dict(severities),
             "severity_field": severity_field, "utc_offset_hours": utc_offset_hours,
             "warnings": warnings, "issues": rows}

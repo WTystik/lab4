@@ -20,7 +20,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Аналитика Jira Cloud для ЛР4")
     parser.add_argument("--config", default="config.toml")
     parser.add_argument("--output", default="output")
-    parser.add_argument("--fixture", help="Локальный JSON; результат всегда маркируется ДЕМО")
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument("--fixture", help="Локальный JSON; результат всегда маркируется ДЕМО")
+    inputs.add_argument("--from-export", help="Папка ранее сохраненной выгрузки Jira: raw_issues.json и summary.json")
     parser.add_argument("--list-fields", action="store_true", help="Показать ID полей Jira")
     args = parser.parse_args(argv)
     output = Path(args.output)
@@ -36,6 +38,17 @@ def main(argv=None):
             issues = json.loads(Path(args.fixture).read_text(encoding="utf-8"))
             label = "ДЕМО  локальный искусственный набор  не выгрузка Jira"
             source = {"mode": "demo", "fixture": str(args.fixture)}
+        elif args.from_export:
+            previous = Path(args.from_export)
+            saved = json.loads((previous / "summary.json").read_text(encoding="utf-8"))
+            issues = json.loads((previous / "raw_issues.json").read_text(encoding="utf-8"))
+            origin = saved.get("source", {})
+            if origin.get("mode") not in ("jira", "saved-jira"):
+                raise ValueError("Для повторного расчета требуется сохраненная выгрузка Jira; для примера используйте --fixture.")
+            if len(issues) != saved["total"]:
+                raise ValueError("Число задач в raw_issues.json не совпадает со сводкой выгрузки.")
+            source = {**origin, "mode": "saved-jira"}
+            label = origin.get("jql", "Выборка Jira") + " · сохраненная выгрузка"
         else:
             email = os.environ.get("JIRA_EMAIL", "")
             token = os.environ.get("JIRA_API_TOKEN", "")
@@ -52,7 +65,8 @@ def main(argv=None):
             source = {"mode": "jira", "base_url": settings["base_url"], "jql": settings["jql"]}
         if not issues:
             raise ValueError("Выборка пуста. Проверьте JQL, проект и права просмотра.")
-        source["exported_at_utc"] = datetime.now(timezone.utc).isoformat()
+        time_field = "processed_at_utc" if args.from_export else "exported_at_utc"
+        source[time_field] = datetime.now(timezone.utc).isoformat()
         data = analyze(issues, settings.get("closed_status_names", ["Закрыта", "Done", "Closed"]),
                        settings.get("utc_offset_hours", 3), severity)
         data["source"] = source
@@ -65,8 +79,9 @@ def main(argv=None):
         render_charts(data, output, label)
         for warning in data["warnings"]:
             logging.warning(warning)
-        logging.info("Режим: %s; задач: %s; закрытых с датой: %s; закрытых без трудозатрат: %s",
-                     source["mode"], data["total"], data["closed_count"], data["missing_worklogs"])
+        logging.info("Режим: %s; задач: %s; закрытых: %s; с датой: %s; без трудозатрат: %s",
+                     source["mode"], data["total"], data["closed_count"],
+                     data["closed_with_date_count"], data["missing_worklogs"])
         logging.info("Готово: %s", (output / "index.html").resolve())
         return 0
     except (JiraError, ValueError, KeyError, TypeError, OSError, ImportError) as exc:
