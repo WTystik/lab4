@@ -5,7 +5,7 @@ import unittest
 from urllib.error import HTTPError
 from unittest.mock import patch
 
-from jira_analytics.client import JiraClient, JiraError
+from jira_analytics.client import JiraClient, JiraError, jira_address
 
 
 class ClientTests(unittest.TestCase):
@@ -60,3 +60,79 @@ class ClientTests(unittest.TestCase):
     def test_http_is_rejected(self):
         with self.assertRaises(ValueError):
             JiraClient("http://example.org", "user", "token")
+
+
+class ServerClientTests(unittest.TestCase):
+    def setUp(self):
+        self.client = JiraClient("https://issues.apache.org/jira")
+
+    @staticmethod
+    def issue(key, events=None):
+        events = [] if events is None else events
+        return {"key": key, "changelog": {"startAt": 0, "total": len(events), "histories": events}}
+
+    def test_apache_root_and_project_urls(self):
+        self.assertEqual(jira_address("https://issues.apache.org/"), ("https://issues.apache.org/jira", None))
+        self.assertEqual(jira_address("https://issues.apache.org/jira/projects/HDFS/issues"),
+                         ("https://issues.apache.org/jira", "HDFS"))
+        self.assertEqual(self.client.api, "server")
+        self.assertNotIn("Authorization", self.client.headers)
+
+    def test_credentials_in_url_are_rejected(self):
+        with self.assertRaises(ValueError):
+            jira_address("https://user:secret@issues.apache.org/jira")
+
+    def test_server_search_reads_short_pages_and_embedded_history(self):
+        event = {"created": "2026-01-01T10:00:00Z", "items": []}
+        with patch.object(self.client, "request", side_effect=[
+            {"startAt": 0, "total": 2, "issues": [self.issue("KAFKA-1", [event])]},
+            {"startAt": 1, "total": 2, "issues": [self.issue("KAFKA-2")]},
+        ]) as request:
+            result = self.client.issues("project = KAFKA")
+        self.assertEqual([x["key"] for x in result], ["KAFKA-1", "KAFKA-2"])
+        self.assertEqual(result[0]["histories"], [event])
+        self.assertNotIn("changelog", result[0])
+        self.assertEqual(request.call_args_list[1].args[1]["startAt"], 1)
+        self.assertEqual(request.call_args_list[0].args[0], "/rest/api/2/search")
+
+    def test_server_partial_search_history_reads_full_issue(self):
+        item = self.issue("KAFKA-1")
+        item["changelog"]["total"] = 1
+        full = self.issue("KAFKA-1", [{"id": "h1"}])
+        with patch.object(self.client, "request", side_effect=[
+            {"total": 1, "issues": [item]}, full,
+        ]) as request:
+            self.assertEqual(self.client.issues("project=KAFKA")[0]["histories"], [{"id": "h1"}])
+        self.assertEqual(request.call_args_list[1].args[0], "/rest/api/2/issue/KAFKA-1")
+
+    def test_server_incomplete_history_is_not_silently_used(self):
+        item = self.issue("KAFKA-1")
+        item["changelog"]["total"] = 2
+        with patch.object(self.client, "request", side_effect=[{"total": 1, "issues": [item]}, item]):
+            with self.assertRaisesRegex(JiraError, "неполную историю"):
+                self.client.issues("project=KAFKA")
+
+    def test_server_empty_intermediate_page_fails(self):
+        with patch.object(self.client, "request", return_value={"total": 2, "issues": []}):
+            with self.assertRaises(JiraError):
+                self.client.issues("project=KAFKA")
+
+    def test_server_duplicate_issues_fail(self):
+        with patch.object(self.client, "request", side_effect=[
+            {"startAt": 0, "total": 2, "issues": [self.issue("KAFKA-1")]},
+            {"startAt": 1, "total": 2, "issues": [self.issue("KAFKA-1")]},
+        ]):
+            with self.assertRaisesRegex(JiraError, "повторилась"):
+                self.client.issues("project=KAFKA")
+
+    def test_server_ignoring_start_offset_fails(self):
+        with patch.object(self.client, "request", side_effect=[
+            {"startAt": 0, "total": 2, "issues": [self.issue("KAFKA-1")]},
+            {"startAt": 0, "total": 2, "issues": [self.issue("KAFKA-2")]},
+        ]):
+            with self.assertRaisesRegex(JiraError, "повторил страницу"):
+                self.client.issues("project=KAFKA")
+
+    def test_empty_project_returns_empty_list(self):
+        with patch.object(self.client, "request", return_value={"total": 0, "issues": []}):
+            self.assertEqual(self.client.issues("project=EMPTY"), [])

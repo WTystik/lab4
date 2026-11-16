@@ -25,6 +25,8 @@ def _time_unit(values, seconds_below=1 / 60):
         return 3600, "секунды", "с"
     if maximum < 3:
         return 60, "минуты", "мин"
+    if maximum >= 240:
+        return 1 / 24, "дни", "дн"
     return 1, "часы", "ч"
 
 
@@ -110,10 +112,10 @@ def render_charts(data, output, label):
         counts, _, bars = ax.hist(scaled, bins=edges, color=color,
                                  edgecolor="white", linewidth=1.5, rwidth=.82)
         for bar, count in zip(bars, counts):
-            if count:
+            if count and (not compact or len(bars) <= 10 or count == max(counts)):
                 ax.annotate(str(int(count)), (bar.get_x() + bar.get_width() / 2, count),
                             xytext=(0, 7), textcoords="offset points", ha="center",
-                            fontsize=13, fontweight="bold", color=INK)
+                            fontsize=9 if compact else 13, fontweight="bold", color=INK)
         ax.set_xlim(0, edges[-1])
         ax.set_ylim(0, max(counts) * 1.38)
         if len(edges) <= 9:
@@ -190,9 +192,10 @@ def render_charts(data, output, label):
             for field, color, marker, label_text in (("cumulative_created", RED, "o", "Создано"),
                                                      ("cumulative_closed", GREEN, "s", "Закрыто")):
                 axes[1].plot(x, [r[field] for r in daily], color=color, marker=marker,
-                             markersize=7, linewidth=2.2, label=label_text, zorder=3)
+                             markevery=max(1, len(daily) // 20),
+                             markersize=5, linewidth=2.2, label=label_text, zorder=3)
                 axes[1].annotate(str(daily[-1][field]), (x[-1], daily[-1][field]),
-                                 xytext=(10, 3), textcoords="offset points", color=color,
+                                 xytext=(-8, 10), ha="right", textcoords="offset points", color=color,
                                  fontsize=12, fontweight="bold")
             peak = max(max(r["created"], r["closed"]) for r in daily)
             axes[0].set_ylim(0, max(peak * 1.3, 1))
@@ -209,9 +212,12 @@ def render_charts(data, output, label):
         save(fig, "03_daily.png")
 
         users = data["users"]
-        height = max(4.5, .6 * len(users) + 2.5)
+        height = max(4.5, .38 * len(users) + 2.4)
         fig, ax = canvas("Топ пользователей по количеству задач",
                          f"Показано пользователей: {len(users)} · ограничение: 30 · рейтинг по различным задачам", height)
+        fig._suptitle.set_y(1 - .22 / height)
+        fig.texts[1].set_y(1 - .65 / height)
+        fig.subplots_adjust(top=1 - 1.2 / height, bottom=1.1 / height)
         ax.grid(False)
         style(ax, horizontal=True)
         y = list(range(len(users)))
@@ -222,6 +228,7 @@ def render_charts(data, output, label):
             ax.bar_label(bars, padding=7, fontsize=12, color=color, fontweight="bold")
         names = [u["name"] for u in users]
         labels = [u["name"] + (f" [{u['id'][-6:]}]" if names.count(u["name"]) > 1 else "") for u in users]
+        fig.subplots_adjust(left=min(.38, max(.16, .05 + .007 * max(map(len, labels), default=0))))
         ax.set_yticks(y, labels)
         ax.set_ylim(len(users) - .38, -.62)
         peak = max((max(u["assignee"], u["reporter"]) for u in users), default=1)
@@ -230,7 +237,7 @@ def render_charts(data, output, label):
         ax.set_ylabel("Пользователь", labelpad=10)
         if users:
             ax.legend(loc="lower right", bbox_to_anchor=(1, 1.02), ncol=2, frameon=False, fontsize=10)
-        fig.text(.10, .045, "Для каждой роли подсчет отдельный. Одна задача учитывается один раз при выборе топ-30.",
+        fig.text(.10, .14 / height, "Для каждой роли подсчет отдельный. Одна задача учитывается один раз при выборе топ-30.",
                  color=MUTED, fontsize=10)
         save(fig, "04_users.png")
 

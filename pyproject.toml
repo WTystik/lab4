@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jira-lab4-analytics"
-version = "1.1.0"
-description = "Jira Cloud analytics for laboratory work 4"
+version = "1.2.0"
+description = "Apache Jira Server and Jira Cloud analytics for laboratory work 4"
 requires-python = ">=3.11"
 dependencies = ["matplotlib>=3.8,<4"]
 

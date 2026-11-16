@@ -1,6 +1,7 @@
 """Интеграция модулей и CLI на локальном наборе, без доступа к реальной Jira."""
 
 import json
+import io
 import os
 from pathlib import Path
 import tempfile
@@ -15,6 +16,25 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class IntegrationTests(unittest.TestCase):
+    def test_apache_project_url_to_full_pipeline_without_cloud_credentials(self):
+        issues = json.loads((ROOT / "tests" / "fixture.json").read_text(encoding="utf-8"))
+        page = {"total": len(issues), "issues": [
+            {**issue, "changelog": {"total": len(issue["histories"]), "histories": issue["histories"]}}
+            for issue in issues]}
+        with tempfile.TemporaryDirectory() as temp, \
+             patch.dict(os.environ, {"JIRA_EMAIL": "old-cloud-user", "JIRA_API_TOKEN": "old-cloud-secret"}), \
+             patch("jira_analytics.client.urlopen") as transport:
+            transport.return_value = io.BytesIO(json.dumps(page).encode())
+            code = main(["--config", str(ROOT / "config.toml"), "--project",
+                         "https://issues.apache.org/jira/projects/HDFS", "--output", temp])
+            self.assertEqual(code, 0)
+            request = transport.call_args.args[0]
+            self.assertIn("/jira/rest/api/2/search?", request.full_url)
+            self.assertNotIn("Authorization", request.headers)
+            summary = json.loads((Path(temp) / "summary.json").read_text(encoding="utf-8"))
+            self.assertIn('project = "HDFS"', summary["source"]["jql"])
+            self.assertEqual(summary["source"]["api"], "server")
+
     def test_fixture_to_cli_charts_and_json(self):
         with tempfile.TemporaryDirectory() as temp:
             code = main(["--config", str(ROOT / "config.toml"),
@@ -32,7 +52,7 @@ class IntegrationTests(unittest.TestCase):
         issues = json.loads((ROOT / "tests" / "fixture.json").read_text(encoding="utf-8"))
         pages = [{"issues": issues[:2], "nextPageToken": "next"}, {"issues": issues[2:], "isLast": True}]
         pages += [{"values": issue["histories"], "isLast": True} for issue in issues]
-        client = JiraClient("https://example.org", "test", "test")
+        client = JiraClient("https://example.org", "test", "test", api="cloud")
         with patch.object(client, "request", side_effect=pages):
             result = analyze(client.issues("project = DEMO"), ["Закрыта"])
         self.assertEqual(result["total"], 4)

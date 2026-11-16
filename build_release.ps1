@@ -12,10 +12,10 @@ $taskVersion = (& $taskPython -c "import tomllib; print(tomllib.load(open('pypro
 $taskWheel = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'dist') -Filter "jira_lab4_analytics-$taskVersion-*.whl" | Select-Object -First 1
 if (-not $taskWheel) { throw 'Built wheel not found.' }
 Copy-Item -LiteralPath $taskWheel.FullName -Destination $taskRelease
-foreach ($taskFile in @('config.toml', 'start.cmd', 'README.md')) {
+foreach ($taskFile in @('config.toml', 'start.cmd', 'install.cmd', 'README.md')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $taskFile) -Destination $taskRelease
 }
-$taskReleaseFiles = @($taskWheel.Name, 'config.toml', 'start.cmd', 'README.md') |
+$taskReleaseFiles = @($taskWheel.Name, 'config.toml', 'start.cmd', 'install.cmd', 'README.md') |
     ForEach-Object { Join-Path $taskRelease $_ }
 Compress-Archive -LiteralPath $taskReleaseFiles -DestinationPath (Join-Path $PSScriptRoot 'dist\jira-lab4-analytics-windows.zip') -Force
 Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'dist') | Select-Object Name,Length
